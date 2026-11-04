@@ -1,0 +1,22 @@
+{
+  "name": "captive-portal",
+  "version": "1.0.0",
+  "description": "Zero-dependency Node.js Wi-Fi Captive Portal & Marketing Gateway",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "captive-portal",
+    "wifi-marketing",
+    "lead-generation",
+    "termux",
+    "nodejs",
+    "hotspot"
+  ],
+  "author": "Shafayat Hossain",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}
