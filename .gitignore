@@ -15,3 +15,7 @@ Thumbs.db
 
 # Node dependencies (if any added in future)
 node_modules/
+
+# Customer directories & records (runtime customer data)
+customers/*
+!customers/.gitkeep
