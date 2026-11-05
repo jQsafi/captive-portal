@@ -2,28 +2,37 @@
 
 A lightweight, zero-dependency Wi-Fi Captive Portal and Marketing Gateway written in pure Node.js. Collect customer leads (Name & WhatsApp / Phone numbers) in exchange for free Wi-Fi access at venues, cafes, retail stores, events, or via mobile hotspots.
 
-Designed to run smoothly on Linux servers, Raspberry Pi, or directly on Android devices via **Termux**.
+Designed to run smoothly on **Windows 10/11**, Linux servers, Raspberry Pi, or directly on Android devices via **Termux**.
 
 ---
 
 ## ✨ Features
 
-- **📱 Mobile-First Captive Portal:** Modern, sleek landing page optimized for smartphones and tablets.
-- **🔍 OS Captive Portal Detection:** Responds to standard network probe endpoints for Android (`/generate_204`), iOS/macOS (`/hotspot-detect.html`), and Windows (`/ncsi.txt`, `/connecttest.txt`).
-- **🚀 Zero NPM Dependencies:** Powered entirely by Node.js built-in modules (`node:http`, `node:net`, `node:url`, `node:sqlite`, `node:os`). No `node_modules` required!
+- **📶 Windows Hotspot Automation:** Automatically switches on your Windows Mobile Hotspot and configures SSID & passphrase when starting the project.
+- **🛡️ Windows Defender Firewall Client Isolation:** Blocks unauthorized guest devices from browsing the internet until they submit their lead via the portal.
+- **📱 Automatic Mobile Sign-In Popups:** Responds to standard network probe endpoints and redirects mobile probe domains to trigger instant OS captive login prompts on:
+  - **Android / Google Chrome:** `/generate_204`, `connectivitycheck.gstatic.com`, `clients3.google.com`
+  - **Apple iOS / macOS / iPadOS:** CNA `/hotspot-detect.html`, `captive.apple.com`
+  - **Samsung Galaxy:** `connectivity.samsung.com`
+  - **Xiaomi / Redmi / MIUI / HyperOS:** `connect.rom.miui.com`
+  - **Huawei / Honor:** `connectivitycheck.platform.hicloud.com`
+  - **Windows:** `/ncsi.txt`, `/connecttest.txt`, `www.msftconnecttest.com`
+- **🚀 Zero NPM Dependencies:** Powered entirely by Node.js built-in modules (`node:http`, `node:net`, `node:sqlite`, `node:os`, `node:child_process`). No `node_modules` required!
+- **🌐 Standard WHATWG URL API:** Built to modern Node.js standards without deprecated legacy methods.
 - **🗄️ Native SQLite Storage:** Persists customer leads locally in SQLite using Node.js's built-in `node:sqlite` (`DatabaseSync`).
 - **📊 Real-Time Admin Dashboard:** View collected leads, monitor connected IPs, and revoke device access with one click at `/admin`.
 - **💬 Direct WhatsApp Chat Links:** Instantly start WhatsApp conversations with connected customers directly from the dashboard.
 - **📥 1-Click CSV/Excel Export:** Export lead datasets anytime via `/admin/export.csv` for CRM or marketing campaigns.
 - **🛡️ Input Validation & Cleaning:** Automatically cleans phone number formats and filters out dummy/invalid entries.
-- **🌐 HTTP/HTTPS Forwarding:** Built-in proxy and HTTPS CONNECT tunneling for authenticated users.
+- **🔄 Port 80 with Auto-Fallback:** Operates directly on standard HTTP Port 80 for native captive portal detection, with automatic fallback to Port 8080 if Port 80 is occupied.
 
 ---
 
 ## 📋 Requirements
 
 - **Node.js >= 22.5.0** (requires native `node:sqlite` support)
-- Compatible with Linux, macOS, Windows, Raspberry Pi, and Android (Termux)
+- Compatible with Windows 10/11, Linux, macOS, Raspberry Pi, and Android (Termux)
+- See [`CHECKLIST.md`](CHECKLIST.md) for full pre-flight verification steps.
 
 ---
 
@@ -36,25 +45,33 @@ cd captive-portal
 ```
 
 ### 2. Start the Server
-Make the start script executable and launch the server:
+
+#### On Windows:
+Right-click `start.bat` and click **Run as administrator** (or double-click `start.bat` and accept the UAC prompt):
+```cmd
+start.bat
+```
+*(When prompted for Administrator privileges, click **Yes** so Windows can activate the Mobile Hotspot, bind Port 80, apply firewall isolation rules, and configure auto-popup redirects).*
+
+#### On Linux / Termux:
 ```bash
 chmod +x start.sh
 ./start.sh
 ```
-Or start directly with Node.js:
-```bash
-node server.js
-```
 
-Upon launching, the terminal will display the active IP addresses and ports:
+Upon launching, the terminal will display the active IP addresses, Hotspot credentials, and dashboard links:
 ```
 ====================================================
-🎯 Wi-Fi Marketing Captive Portal running on Port 8080
+🎯 Wi-Fi Marketing Captive Portal running on Port 80
 ----------------------------------------------------
-  [wlan0] http://192.168.43.1:8080
+📶 Wi-Fi Hotspot SSID : Smart Computer Guest
+🔑 Wi-Fi Password     : 11111111
 ----------------------------------------------------
-📊 Marketing Dashboard: http://localhost:8080/admin
-📥 Download CSV Leads:  http://localhost:8080/admin/export.csv
+  [Local Area Connection* 10] http://192.168.137.1
+  [Ethernet] http://192.168.0.97
+----------------------------------------------------
+📊 Marketing Dashboard: http://localhost/admin
+📥 Download CSV Leads:  http://localhost/admin/export.csv
 ====================================================
 ```
 
@@ -62,36 +79,31 @@ Upon launching, the terminal will display the active IP addresses and ports:
 
 ## ⚙️ Configuration
 
-You can easily customize the business name, marketing messaging, and redirect destinations in [`server.js`](server.js):
+You can customize the business name, marketing messaging, destination URL, and Hotspot settings in [`server.js`](server.js):
 
 ```javascript
-const PORT = 8080;
+const PORT = 80;
 
 const CONFIG = {
-  businessName: 'Exclusive Free Wi-Fi',
-  promoHeadline: 'Get Free High-Speed Wi-Fi & Exclusive Offers! 🎁',
-  promoSubtext: 'Enter your name and mobile number to unlock instant unlimited internet and receive special discounts & VIP deals.',
-  // Destination URL after user connects (e.g., website, Instagram, Google Maps review)
-  redirectUrl: 'https://www.google.com'
+  businessName: 'Smart Computer',
+  promoHeadline: 'Welcome to Smart Computer! 🎁',
+  promoSubtext: 'Enter your name and mobile number to unlock instant unlimited high-speed internet.',
+  // Destination URL after user connects (e.g., website, Instagram, Google Reviews)
+  redirectUrl: 'https://www.google.com',
+
+  // Windows Hotspot Auto-Start Settings
+  hotspot: {
+    autoStart: true,
+    ssid: 'Smart Computer Guest',
+    // Note: Windows enforces minimum 8 characters (WPA2-Personal)
+    password: '11111111'
+  }
 };
 ```
 
----
-
-## 🌐 Network & Hotspot Setup
-
-To route guest devices through the captive portal:
-
-### Option A: Mobile Hotspot (Termux / Android / Linux)
-1. Turn on your mobile Wi-Fi Hotspot.
-2. Note your gateway IP address (commonly `192.168.43.1`).
-3. For connected clients, configure their Wi-Fi proxy settings to point to your IP on port `8080` (or use `iptables` redirect rules if rooted):
-   ```bash
-   iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8080
-   ```
-
-### Option B: Router Redirection (OpenWrt / MikroTik / DD-WRT)
-Configure your router's captive portal or firewall rules to forward unauthorized HTTP traffic on port `80` to `http://<SERVER_IP>:8080`.
+> [!NOTE]
+> **Why does Windows require a password?**
+> Microsoft's native Windows Mobile Hotspot system strictly enforces WPA2-Personal (AES) security, which requires a minimum of 8 characters. Setting a simple password (e.g., `11111111` or `12345678`) allows anyone to connect easily while remaining fully compliant with Windows wireless driver architecture.
 
 ---
 
@@ -100,7 +112,7 @@ Configure your router's captive portal or firewall rules to forward unauthorized
 | Endpoint | Method | Description |
 | :--- | :--- | :--- |
 | `/` or `/portal` | `GET` | Captive portal login & lead capture page |
-| `/auth/connect` | `POST` | Validates submission, stores lead, and authorizes client IP |
+| `/auth/connect` | `POST` | Validates submission, stores lead in SQLite, and authorizes client IP |
 | `/admin` | `GET` | Admin dashboard to view leads and connected devices |
 | `/admin/export.csv` | `GET` | Downloads all leads as a CSV file |
 | `/admin/revoke` | `POST` | Revokes internet access for a specified client IP |
@@ -114,11 +126,18 @@ Configure your router's captive portal or firewall rules to forward unauthorized
 
 ```
 captive-portal/
-├── server.js          # Core server, captive portal logic, routing & proxy
-├── start.sh           # Shell launch script
+├── server.js          # Core HTTP server, captive portal logic, routing & proxy
+├── hotspot.js         # Windows Mobile Hotspot automation controller
+├── hotspot.ps1        # WinRT PowerShell script for Windows tethering
+├── firewall.js        # Windows Defender Firewall access control controller
+├── firewall.ps1       # PowerShell script managing outbound client isolation rules
+├── hosts-manager.js   # Multi-vendor mobile probe DNS redirect manager
+├── start.bat          # 1-click elevated Windows launcher (frees Port 80 & launches)
+├── start.sh           # Shell launch script for Linux / Android
 ├── package.json       # Project metadata and npm scripts
-├── .gitignore         # Git ignore rules (excludes leads.db database)
-└── README.md          # Documentation
+├── CHECKLIST.md       # Pre-flight and deployment checklist
+├── .gitignore         # Git ignore rules (excludes leads.db database & runtime files)
+└── README.md          # Project documentation
 ```
 
 ---

@@ -7,6 +7,7 @@ leads.db
 # Logs & temp
 *.log
 npm-debug.log*
+allowed_ips.txt
 
 # OS specific files
 .DS_Store

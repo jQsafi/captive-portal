@@ -1,20 +1,32 @@
 const http = require('node:http');
 const net = require('node:net');
-const url = require('node:url');
 const os = require('node:os');
 const { DatabaseSync } = require('node:sqlite');
 const path = require('node:path');
+let firewall;
+try { firewall = require('./firewall.js'); } catch (e) { firewall = null; }
+let hostsManager;
+try { hostsManager = require('./hosts-manager.js'); } catch (e) { hostsManager = null; }
+let hotspot;
+try { hotspot = require('./hotspot.js'); } catch (e) { hotspot = null; }
 
-const PORT = 8080;
+const PORT = 80;
 const DB_PATH = path.join(__dirname, 'leads.db');
 
 // --- Marketing Settings ---
 const CONFIG = {
-  businessName: 'Exclusive Free Wi-Fi',
-  promoHeadline: 'Get Free High-Speed Wi-Fi & Exclusive Offers! 🎁',
-  promoSubtext: 'Enter your name and mobile number to unlock instant unlimited internet and receive special discounts & VIP deals.',
+  businessName: 'Smart Computer',
+  promoHeadline: 'Welcome to Smart Computer! 🎁',
+  promoSubtext: 'Enter your name and mobile number to unlock instant unlimited high-speed internet.',
   // Where to send users after they connect (e.g. your Instagram, Google Reviews page, or website)
-  redirectUrl: 'https://www.google.com'
+  redirectUrl: 'https://www.google.com',
+  // Windows Hotspot Auto-Start Settings
+  hotspot: {
+    autoStart: true,
+    ssid: 'Smart Computer Guest',
+    // Note: Windows requires at least 8 characters (WPA2-Personal)
+    password: '11111111'
+  }
 };
 
 // --- 1. Database Initialization ---
@@ -243,7 +255,7 @@ function escapeHtml(str) {
 // --- 3. Main HTTP Server ---
 const server = http.createServer((req, res) => {
   const clientIp = getClientIp(req);
-  const parsedUrl = url.parse(req.url, true);
+  const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
 
   // 3.1 Admin Dashboard
   if (parsedUrl.pathname === '/admin') {
@@ -275,6 +287,7 @@ const server = http.createServer((req, res) => {
       const ip = params.get('ip');
       if (ip) {
         authorizedIps.delete(ip);
+        if (firewall) firewall.revokeIp(ip);
         console.log(`[Revoke] Access revoked for IP: ${ip}`);
       }
       res.writeHead(302, { Location: '/admin' });
@@ -311,6 +324,7 @@ const server = http.createServer((req, res) => {
 
       // Authorize client IP
       authorizedIps.add(clientIp);
+      if (firewall) firewall.allowIp(clientIp);
       console.log(`[+] NEW MARKETING LEAD: ${name} (${phone}) from IP: ${clientIp}`);
 
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -321,32 +335,57 @@ const server = http.createServer((req, res) => {
 
   // 3.5 Direct Portal Access
   if (parsedUrl.pathname === '/portal' || parsedUrl.pathname === '/') {
-    if (!authorizedIps.has(clientIp)) {
+    if (!authorizedIps.has(clientIp) || parsedUrl.pathname === '/portal') {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       return res.end(getPortalHtml(clientIp));
     }
   }
 
-  // 3.6 Captive Portal Probes
+  // 3.6 Captive Portal Probes (Triggers automatic sign-in popup on Android, Apple, Windows)
   const captiveProbes = ['/generate_204', '/gen_204', '/hotspot-detect.html', '/ncsi.txt', '/connecttest.txt', '/success.txt'];
-  if (captiveProbes.includes(parsedUrl.pathname) && !authorizedIps.has(clientIp)) {
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    return res.end(getPortalHtml(clientIp));
+  if (captiveProbes.includes(parsedUrl.pathname)) {
+    if (!authorizedIps.has(clientIp)) {
+      const portalUrl = `http://192.168.137.1${PORT === 80 ? '' : ':' + PORT}/portal`;
+      // Android / Chrome: 302 redirect triggers instant OS "Sign in to Wi-Fi" notification
+      if (parsedUrl.pathname === '/generate_204' || parsedUrl.pathname === '/gen_204') {
+        res.writeHead(302, { 'Location': portalUrl });
+        return res.end();
+      }
+      // Apple CNA & Windows NCSI: return portal HTML
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      return res.end(getPortalHtml(clientIp));
+    } else {
+      if (parsedUrl.pathname === '/generate_204' || parsedUrl.pathname === '/gen_204') {
+        res.writeHead(204);
+        return res.end();
+      }
+      if (parsedUrl.pathname === '/hotspot-detect.html') {
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        return res.end('<HTML><HEAD><TITLE>Success</TITLE></HEAD><BODY>Success</BODY></HTML>');
+      }
+      if (parsedUrl.pathname === '/ncsi.txt' || parsedUrl.pathname === '/connecttest.txt') {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        return res.end('Microsoft Connect Test');
+      }
+      res.writeHead(200, { 'Content-Type': 'text/plain' });
+      return res.end('success');
+    }
   }
 
-  // 3.7 Intercept Unauthenticated Browsing
+  // 3.7 Intercept Unauthenticated Browsing (Redirect to portal)
   if (!authorizedIps.has(clientIp)) {
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    return res.end(getPortalHtml(clientIp));
+    const portalUrl = `http://192.168.137.1${PORT === 80 ? '' : ':' + PORT}/portal`;
+    res.writeHead(302, { 'Location': portalUrl });
+    return res.end();
   }
 
   // 3.8 Authorized: Forward HTTP Traffic
   try {
-    const proxyUrl = url.parse(req.url);
+    const proxyUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const options = {
-      hostname: proxyUrl.hostname || req.headers.host,
+      hostname: proxyUrl.hostname,
       port: proxyUrl.port || 80,
-      path: proxyUrl.path || '/',
+      path: proxyUrl.pathname + proxyUrl.search,
       method: req.method,
       headers: req.headers
     };
@@ -399,16 +438,63 @@ server.on('connect', (req, clientSocket, head) => {
 });
 
 // --- 5. Start Server ---
-server.listen(PORT, '0.0.0.0', () => {
+if (firewall) {
+  firewall.initFirewall(Array.from(authorizedIps));
+}
+if (hostsManager) {
+  hostsManager.enableProbeRedirects('192.168.137.1');
+}
+process.on('SIGINT', () => {
+  if (firewall) firewall.cleanupFirewall();
+  if (hostsManager) hostsManager.disableProbeRedirects();
+  process.exit(0);
+});
+process.on('exit', () => {
+  if (firewall) firewall.cleanupFirewall();
+  if (hostsManager) hostsManager.disableProbeRedirects();
+});
+if (hotspot && hotspot.isWindows() && CONFIG.hotspot && CONFIG.hotspot.autoStart) {
+  hotspot.startHotspot({
+    ssid: CONFIG.hotspot.ssid,
+    password: CONFIG.hotspot.password
+  });
+}
+
+function printBanner(activePort) {
+  const portSuffix = activePort === 80 ? '' : `:${activePort}`;
   console.log('====================================================');
-  console.log(`🎯 Wi-Fi Marketing Captive Portal running on Port ${PORT}`);
+  console.log(`🎯 Wi-Fi Marketing Captive Portal running on Port ${activePort}`);
   console.log('----------------------------------------------------');
+  if (CONFIG.hotspot && CONFIG.hotspot.autoStart) {
+    console.log(`📶 Wi-Fi Hotspot SSID : ${CONFIG.hotspot.ssid}`);
+    console.log(`🔑 Wi-Fi Password     : ${CONFIG.hotspot.password}`);
+    console.log('----------------------------------------------------');
+  }
   const ips = getLocalIps();
   for (const iface of ips) {
-    console.log(`  [${iface.name}] http://${iface.ip}:${PORT}`);
+    console.log(`  [${iface.name}] http://${iface.ip}${portSuffix}`);
   }
   console.log('----------------------------------------------------');
-  console.log(`📊 Marketing Dashboard: http://localhost:${PORT}/admin`);
-  console.log(`📥 Download CSV Leads:  http://localhost:${PORT}/admin/export.csv`);
+  console.log(`📊 Marketing Dashboard: http://localhost${portSuffix}/admin`);
+  console.log(`📥 Download CSV Leads:  http://localhost${portSuffix}/admin/export.csv`);
   console.log('====================================================');
+}
+
+// Handle port busy / access errors gracefully
+server.on('error', (err) => {
+  if (err.code === 'EACCES' || err.code === 'EADDRINUSE') {
+    if (PORT === 80) {
+      console.warn('[Notice] Port 80 is occupied by a Windows system service. Automatically falling back to Port 8080...');
+      server.listen(8080, '0.0.0.0', () => {
+        printBanner(8080);
+      });
+      return;
+    }
+  }
+  console.error('[Error] Server error:', err.message);
+});
+
+// Start primary server
+server.listen(PORT, '0.0.0.0', () => {
+  printBanner(PORT);
 });
