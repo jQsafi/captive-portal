@@ -2854,8 +2854,8 @@ const server = http.createServer((req, res) => {
 
       // Save lead to database
       const userAgent = req.headers['user-agent'] || '';
-      const insertStmt = db.prepare('INSERT INTO leads (name, phone, ip, customer_type, marketing_opt_in, user_agent) VALUES (?, ?, ?, "Hotspot", 1, ?)');
-      const result = insertStmt.run(name, phone, clientIp, userAgent);
+      const insertStmt = db.prepare('INSERT INTO leads (name, phone, ip, customer_type, marketing_opt_in, user_agent) VALUES (?, ?, ?, ?, 1, ?)');
+      const result = insertStmt.run(name, phone, clientIp, 'Hotspot', userAgent);
       createCustomerFolder({
         id: result.lastInsertRowid,
         name,
