@@ -434,6 +434,73 @@
       border-color: #d97706;
     }
 
+    .btn-notes {
+      background: rgba(168, 85, 247, 0.12);
+      border-color: rgba(168, 85, 247, 0.3);
+      color: #c084fc;
+    }
+
+    .btn-notes:hover {
+      background: #9333ea;
+      color: #ffffff;
+      border-color: #9333ea;
+    }
+
+    .btn-extend {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: #34d399;
+    }
+
+    .btn-extend:hover {
+      background: #059669;
+      color: #ffffff;
+      border-color: #059669;
+    }
+
+    .ip-cell-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    .session-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      letter-spacing: 0.2px;
+    }
+
+    .session-pill-active {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      color: #4ade80;
+    }
+
+    .session-pill-warn {
+      background: rgba(245, 158, 11, 0.18);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #fcd34d;
+      animation: pulseSession 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseSession {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.65; }
+    }
+
+    .session-pill-expired {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #f87171;
+    }
+
     /* Mobile Cards Container */
     .mobile-cards-list {
       display: none;
@@ -551,6 +618,123 @@
       box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
       animation: modalFadeIn 0.25s ease;
       text-align: left;
+    }
+
+    .modal-content-lg {
+      max-width: 760px;
+    }
+
+    .notes-cust-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(30, 41, 59, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      flex-wrap: wrap;
+    }
+
+    .notes-cust-badge b {
+      color: #ffffff;
+      font-size: 14px;
+    }
+
+    .notes-cust-badge span {
+      color: #94a3b8;
+    }
+
+    .notes-cust-badge code {
+      font-family: monospace;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .notes-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .notes-toolbar-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-right: 4px;
+    }
+
+    .btn-snippet {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      color: #cbd5e1;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-snippet:hover {
+      background: rgba(168, 85, 247, 0.15);
+      border-color: rgba(168, 85, 247, 0.4);
+      color: #c084fc;
+    }
+
+    .notes-textarea {
+      width: 100%;
+      height: 330px;
+      padding: 14px 16px;
+      background: #080d1a;
+      border: 1.5px solid rgba(148, 163, 184, 0.25);
+      border-radius: 12px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #f1f5f9;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s ease;
+      white-space: pre-wrap;
+    }
+
+    .notes-textarea:focus {
+      border-color: #a855f7;
+      box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+    }
+
+    .notes-status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      font-size: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .notes-status-text {
+      color: #94a3b8;
+    }
+
+    .notes-status-saved {
+      color: #4ade80;
+      font-weight: 700;
+    }
+
+    .notes-status-error {
+      color: #f87171;
+      font-weight: 700;
     }
 
     @keyframes modalFadeIn {
@@ -889,6 +1073,53 @@
     </div>
   </div>
 
+  <!-- Customer Notes & Service Tracker Modal -->
+  <div class="modal-backdrop" id="customerNotesModal" role="dialog" aria-modal="true" aria-labelledby="notesModalTitle">
+    <div class="modal-content modal-content-lg">
+      <div class="modal-header">
+        <h2 id="notesModalTitle">📝 Customer Service Notes & In-Store History</h2>
+        <button type="button" class="modal-close-btn" id="closeNotesModalBtn" aria-label="Close modal">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="notesCustId">
+        
+        <div class="notes-cust-badge">
+          <div>Customer: <b id="notesCustName">—</b></div>
+          <div>Phone: <span id="notesCustPhone">—</span></div>
+          <div>File: <code id="notesCustFolder">customers/notes.txt</code></div>
+        </div>
+
+        <div class="notes-toolbar">
+          <span class="notes-toolbar-label">Quick Log Templates:</span>
+          <button type="button" class="btn-snippet" onclick="insertNoteSnippet('repair')">
+            <span>🛠️ + Repair / Service</span>
+          </button>
+          <button type="button" class="btn-snippet" onclick="insertNoteSnippet('sale')">
+            <span>🛒 + Sale / Invoice</span>
+          </button>
+          <button type="button" class="btn-snippet" onclick="insertNoteSnippet('general')">
+            <span>📌 + General Note</span>
+          </button>
+        </div>
+
+        <textarea id="customerNotesTextarea" class="notes-textarea" spellcheck="false" placeholder="Loading customer notes..."></textarea>
+        
+        <div class="notes-status-row">
+          <span class="notes-status-text">💾 Notes are saved directly to the customer's <code>notes.txt</code> record file.</span>
+          <span id="notesStatusMsg" class="notes-status-text"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="cancelNotesModalBtn">Close</button>
+        <button type="button" class="btn-save" id="saveNotesBtn" onclick="saveCustomerNotes()" style="background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%);">
+          💾 Save Notes
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Real-time Filter & Modal Script -->
   <script>
     (function() {
@@ -1021,11 +1252,142 @@
         });
       }
 
+      // Customer Notes Modal Handlers
+      var notesModal = document.getElementById('customerNotesModal');
+      var closeNotesBtn = document.getElementById('closeNotesModalBtn');
+      var cancelNotesBtn = document.getElementById('cancelNotesModalBtn');
+      var notesTextarea = document.getElementById('customerNotesTextarea');
+      var notesStatusMsg = document.getElementById('notesStatusMsg');
+      var saveNotesBtn = document.getElementById('saveNotesBtn');
+
+      window.openNotesModal = function(id, name, phone, folder) {
+        var notesCustId = document.getElementById('notesCustId');
+        var notesCustName = document.getElementById('notesCustName');
+        var notesCustPhone = document.getElementById('notesCustPhone');
+        var notesCustFolder = document.getElementById('notesCustFolder');
+
+        if (notesCustId) notesCustId.value = id;
+        if (notesCustName) notesCustName.textContent = name || 'Customer #' + id;
+        if (notesCustPhone) notesCustPhone.textContent = phone || '';
+        if (notesCustFolder) notesCustFolder.textContent = 'customers/' + folder + '/notes.txt';
+
+        if (notesStatusMsg) notesStatusMsg.textContent = 'Loading notes...';
+        if (notesTextarea) {
+          notesTextarea.value = 'Loading customer notes from folder...';
+          notesTextarea.disabled = true;
+        }
+
+        if (notesModal) notesModal.classList.add('active');
+
+        fetch('/admin/customer/notes?id=' + encodeURIComponent(id))
+          .then(function(res) { return res.json(); })
+          .then(function(data) {
+            if (data.success) {
+              if (notesTextarea) {
+                notesTextarea.value = data.notes || '';
+                notesTextarea.disabled = false;
+                notesTextarea.focus();
+              }
+              if (notesStatusMsg) notesStatusMsg.textContent = '';
+            } else {
+              if (notesStatusMsg) notesStatusMsg.innerHTML = '<span class="notes-status-error">' + (data.error || 'Failed to load notes') + '</span>';
+              if (notesTextarea) notesTextarea.disabled = false;
+            }
+          })
+          .catch(function(err) {
+            if (notesStatusMsg) notesStatusMsg.innerHTML = '<span class="notes-status-error">Error connecting to server</span>';
+            if (notesTextarea) notesTextarea.disabled = false;
+          });
+      };
+
+      window.closeNotesModal = function() {
+        if (notesModal) notesModal.classList.remove('active');
+        if (notesStatusMsg) notesStatusMsg.textContent = '';
+      };
+
+      if (closeNotesBtn) closeNotesBtn.addEventListener('click', window.closeNotesModal);
+      if (cancelNotesBtn) cancelNotesBtn.addEventListener('click', window.closeNotesModal);
+      if (notesModal) {
+        notesModal.addEventListener('click', function(e) {
+          if (e.target === notesModal) window.closeNotesModal();
+        });
+      }
+
+      window.saveCustomerNotes = function() {
+        var id = document.getElementById('notesCustId').value;
+        var notes = notesTextarea ? notesTextarea.value : '';
+
+        if (!id) return;
+
+        if (notesStatusMsg) notesStatusMsg.textContent = 'Saving...';
+        if (saveNotesBtn) saveNotesBtn.disabled = true;
+
+        fetch('/admin/customer/notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: id, notes: notes })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (saveNotesBtn) saveNotesBtn.disabled = false;
+          if (data.success) {
+            if (notesStatusMsg) {
+              notesStatusMsg.innerHTML = '<span class="notes-status-saved">✓ Saved successfully at ' + new Date().toLocaleTimeString() + '</span>';
+            }
+          } else {
+            if (notesStatusMsg) {
+              notesStatusMsg.innerHTML = '<span class="notes-status-error">' + (data.error || 'Failed to save') + '</span>';
+            }
+          }
+        })
+        .catch(function(err) {
+          if (saveNotesBtn) saveNotesBtn.disabled = false;
+          if (notesStatusMsg) {
+            notesStatusMsg.innerHTML = '<span class="notes-status-error">Error saving notes</span>';
+          }
+        });
+      };
+
+      window.insertNoteSnippet = function(type) {
+        if (!notesTextarea) return;
+        var nowStr = new Date().toLocaleString();
+        var snippet = '';
+
+        if (type === 'repair') {
+          snippet = '\n[' + nowStr + '] 🛠️ SERVICE / REPAIR ORDER:\n' +
+                    '  • Device Model   : \n' +
+                    '  • Reported Issue : \n' +
+                    '  • Estimated Cost : ৳ \n' +
+                    '  • Service Status : [Pending / In-Progress / Ready / Delivered]\n' +
+                    '  • Tech Remarks   : \n';
+        } else if (type === 'sale') {
+          snippet = '\n[' + nowStr + '] 🛒 SALE / INVOICE:\n' +
+                    '  • Item Purchased : \n' +
+                    '  • Quantity       : 1\n' +
+                    '  • Total Amount   : ৳ \n' +
+                    '  • Payment Method : [Cash / bKash / Nagad]\n' +
+                    '  • Warranty Period: \n';
+        } else if (type === 'general') {
+          snippet = '\n[' + nowStr + '] 📌 NOTE:\n' +
+                    '  • \n';
+        }
+
+        var startPos = notesTextarea.selectionStart || 0;
+        var endPos = notesTextarea.selectionEnd || 0;
+        var currentVal = notesTextarea.value;
+
+        notesTextarea.value = currentVal.substring(0, startPos) + snippet + currentVal.substring(endPos);
+        notesTextarea.focus();
+        notesTextarea.selectionStart = startPos + snippet.length;
+        notesTextarea.selectionEnd = startPos + snippet.length;
+      };
+
       // Close modals on Escape key
       document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
           if (addModal && addModal.classList.contains('active')) closeAddModal();
           if (editModal && editModal.classList.contains('active')) window.closeEditModal();
+          if (notesModal && notesModal.classList.contains('active')) window.closeNotesModal();
         }
       });
 

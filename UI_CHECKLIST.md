@@ -119,3 +119,42 @@ This checklist tracks the design, development, and verification of all user-faci
   - [x] Implemented in-memory caching engine in `templates.js` via native `node:fs` for zero performance overhead.
   - [x] Shrunk `server.js` from 3,043 lines down to ~680 clean lines.
   - [x] IDE syntax highlighting and linting now function properly for all HTML/CSS/JS template files.
+
+---
+
+## ✅ Phase 6: Customer Notes & Service Tracker (Option 2) — [COMPLETED]
+
+*Focus: Provide shop managers with instant customer history, repair order logs, and sales invoices directly in the browser.*
+
+- [x] **6.1 In-Store Customer Notes Modal**
+  - [x] Added `📝 Notes` button to each customer row in desktop table and mobile cards.
+  - [x] Clicking `Notes` opens `#customerNotesModal` with customer details (name, phone, folder).
+  - [x] Loads and displays the customer's `customers/<phone>/notes.txt` file directly in an in-modal textarea.
+- [x] **6.2 Quick Snippet Log Templates**
+  - [x] `🛠️ + Repair / Service`: Instantly inserts timestamped service order template (Device Model, Issue, Cost, Status, Tech Remarks).
+  - [x] `🛒 + Sale / Invoice`: Inserts timestamped sales log template (Item, Quantity, Total Amount, Payment Method, Warranty).
+  - [x] `📌 + General Note`: Inserts quick timestamped note.
+- [x] **6.3 Native File Synchronization & Real-Time Feedback**
+  - [x] Backend endpoint `GET /admin/customer/notes?id=...` reads the customer file.
+  - [x] Backend endpoint `POST /admin/customer/notes` persists updates directly to `customers/<phone>/notes.txt`.
+  - [x] Real-time visual feedback ("✓ Saved successfully at [Time]") with zero page reloads.
+
+---
+
+## ✅ Phase 7: Wi-Fi Session Limits & Duration Control (Option 3) — [COMPLETED]
+
+*Focus: Control network bandwidth, prevent unauthorized prolonged squatting, and manage access limits gracefully.*
+
+- [x] **7.1 Configurable Session Duration**
+  - [x] Added `CONFIG.session = { durationMinutes: 120, checkIntervalSeconds: 30 }` in `server.js` (default: 2 hours).
+  - [x] Added `session_expires_at` column to SQLite `leads` table to persist session expiration across restarts.
+- [x] **7.2 Background Session Expiration Monitor**
+  - [x] Background interval checks active sessions every 30 seconds.
+  - [x] When a session expires, client IP is automatically purged from `authorizedIps` and revoked from firewall.
+  - [x] Next user browse automatically redirects back to `/portal`.
+- [x] **7.3 Admin Real-Time Remaining Time & 1-Click Extension**
+  - [x] Device IP column displays dynamic session remaining pill (e.g. `⏱️ 1h 45m left` in green, warning pulse when &le; 15m, or `⏱️ Expired`).
+  - [x] Added `⏱️ +1h` button in table rows and mobile cards to extend customer access by +60 minutes with 1 click.
+  - [x] Endpoint `POST /admin/session/extend` updates in-memory sessions and SQLite database.
+- [x] **7.4 Success Screen Session Badge**
+  - [x] Connection success screen displays `⚡ 2 Hours High-Speed Access Activated` badge.

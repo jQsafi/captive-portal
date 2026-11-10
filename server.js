@@ -146,6 +146,11 @@ const CONFIG = {
   defaultCountryCode: '+880',
   // Where to send users after they connect (e.g. your Instagram, Google Reviews page, or website)
   redirectUrl: 'https://www.google.com',
+  // Wi-Fi Session Control & Duration Limit
+  session: {
+    durationMinutes: 120, // 2 hours default Wi-Fi access limit
+    checkIntervalSeconds: 30 // Check expiration every 30 seconds
+  },
   // Windows Hotspot Auto-Start Settings
   hotspot: {
     autoStart: true,
@@ -166,6 +171,7 @@ db.exec(`
     customer_type TEXT DEFAULT 'Hotspot',
     marketing_opt_in INTEGER DEFAULT 1,
     user_agent TEXT,
+    session_expires_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )
 `);
@@ -177,12 +183,83 @@ try {
   // column already exists
 }
 
-const authorizedIps = new Set();
-const recentLeadsStmt = db.prepare("SELECT DISTINCT ip FROM leads WHERE created_at >= datetime('now', '-1 day') AND ip IS NOT NULL AND ip != ''");
-for (const row of recentLeadsStmt.all()) {
-  if (row.ip) authorizedIps.add(row.ip);
+// Add session_expires_at column if upgrading existing database
+try {
+  db.exec("ALTER TABLE leads ADD COLUMN session_expires_at TIMESTAMP");
+} catch (e) {
+  // column already exists
 }
-console.log(`[Database] Loaded ${authorizedIps.size} active authorized client(s).`);
+
+const authorizedIps = new Set();
+const activeSessions = new Map(); // ip => { id, name, phone, connectedAt, expiresAt }
+
+const sessionDurationMinutes = (CONFIG.session && CONFIG.session.durationMinutes) || 120;
+const sessionDurationMs = sessionDurationMinutes * 60 * 1000;
+const startupNow = Date.now();
+
+try {
+  const recentLeadsStmt = db.prepare("SELECT * FROM leads WHERE ip IS NOT NULL AND ip != '' ORDER BY id DESC");
+  for (const row of recentLeadsStmt.all()) {
+    if (!row.ip || activeSessions.has(row.ip)) continue;
+
+    let expiresAt;
+    if (row.session_expires_at) {
+      expiresAt = new Date(row.session_expires_at).getTime();
+    } else if (row.created_at) {
+      const createdTime = new Date(row.created_at).getTime();
+      expiresAt = createdTime + sessionDurationMs;
+    }
+
+    if (expiresAt && expiresAt > startupNow) {
+      authorizedIps.add(row.ip);
+      activeSessions.set(row.ip, {
+        id: row.id,
+        name: row.name,
+        phone: row.phone,
+        connectedAt: row.created_at ? new Date(row.created_at).getTime() : startupNow,
+        expiresAt: expiresAt
+      });
+    }
+  }
+} catch (err) {
+  console.warn('[Database] Warning loading active sessions:', err.message);
+}
+console.log(`[Database] Loaded ${authorizedIps.size} active authorized client(s) with ${activeSessions.size} active session(s).`);
+
+// Background Session Expiration Monitor
+const sessionCheckInterval = ((CONFIG.session && CONFIG.session.checkIntervalSeconds) || 30) * 1000;
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, session] of activeSessions.entries()) {
+    if (session.expiresAt <= now) {
+      console.log(`[Session Expired] ⏱️ Wi-Fi session ended for ${session.name} (${session.phone}) on IP ${ip}`);
+      activeSessions.delete(ip);
+      authorizedIps.delete(ip);
+      if (firewall) firewall.revokeIp(ip);
+    }
+  }
+}, sessionCheckInterval);
+
+function getSessionRemaining(ip) {
+  if (!ip) return null;
+  const session = activeSessions.get(ip);
+  if (!session) return null;
+  const remainingMs = session.expiresAt - Date.now();
+  if (remainingMs <= 0) {
+    return { active: false, remainingMs: 0, text: 'Expired', isWarning: true };
+  }
+  const totalMins = Math.ceil(remainingMs / 60000);
+  const hours = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  const text = hours > 0 ? `${hours}h ${mins}m left` : `${mins}m left`;
+  return {
+    active: true,
+    remainingMs,
+    totalMins,
+    text,
+    isWarning: totalMins <= 15
+  };
+}
 
 // Auto-sync customer folders on startup & migrate phone numbers to standardized +880 format
 try {
@@ -251,7 +328,8 @@ const getAdminHtml = (leads) => templates.getAdminHtml(leads, {
   config: CONFIG,
   authorizedIps,
   getCustomerFolderName,
-  getWhatsAppDigits
+  getWhatsAppDigits,
+  getSessionRemaining
 });
 
 // --- 3. Main HTTP Server ---
@@ -396,6 +474,7 @@ const server = http.createServer((req, res) => {
           // If customer has active Wi-Fi session, revoke IP
           if (lead.ip) {
             authorizedIps.delete(lead.ip);
+            activeSessions.delete(lead.ip);
             if (firewall) firewall.revokeIp(lead.ip);
             console.log(`[Delete] Revoked active IP ${lead.ip} for deleted customer #${id}`);
           }
@@ -447,9 +526,152 @@ const server = http.createServer((req, res) => {
       const ip = params.get('ip');
       if (ip) {
         authorizedIps.delete(ip);
+        activeSessions.delete(ip);
         if (firewall) firewall.revokeIp(ip);
         console.log(`[Revoke] Access revoked for IP: ${ip}`);
       }
+      res.writeHead(302, { Location: '/admin' });
+      res.end();
+    });
+    return;
+  }
+
+  // 3.3.1 Get Customer Notes
+  if (parsedUrl.pathname === '/admin/customer/notes' && req.method === 'GET') {
+    const id = parseInt(parsedUrl.searchParams.get('id'), 10);
+    if (!id) {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      return res.end(JSON.stringify({ success: false, error: 'Customer ID required' }));
+    }
+
+    const customer = db.prepare('SELECT * FROM leads WHERE id = ?').get(id);
+    if (!customer) {
+      res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
+      return res.end(JSON.stringify({ success: false, error: 'Customer record not found' }));
+    }
+
+    const folderName = getCustomerFolderName(customer);
+    const folderPath = path.join(CUSTOMERS_DIR, folderName);
+    if (!fs.existsSync(folderPath)) {
+      createCustomerFolder(customer);
+    }
+    const notesPath = path.join(folderPath, 'notes.txt');
+    let notes = '';
+    try {
+      if (fs.existsSync(notesPath)) {
+        notes = fs.readFileSync(notesPath, 'utf8');
+      } else {
+        createCustomerFolder(customer);
+        notes = fs.existsSync(notesPath) ? fs.readFileSync(notesPath, 'utf8') : '';
+      }
+    } catch (err) {
+      notes = `[Error reading notes: ${err.message}]`;
+    }
+
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    return res.end(JSON.stringify({
+      success: true,
+      id: customer.id,
+      name: customer.name,
+      phone: customer.phone,
+      customer_type: customer.customer_type || 'Hotspot',
+      folder: folderName,
+      notes
+    }));
+  }
+
+  // 3.3.2 Save Customer Notes
+  if (parsedUrl.pathname === '/admin/customer/notes' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      let id, notes;
+      const isJson = (req.headers['content-type'] || '').includes('application/json');
+      if (isJson) {
+        try {
+          const parsed = JSON.parse(body);
+          id = parseInt(parsed.id, 10);
+          notes = parsed.notes;
+        } catch (e) {}
+      } else {
+        const params = new URLSearchParams(body);
+        id = parseInt(params.get('id'), 10);
+        notes = params.get('notes');
+      }
+
+      if (!id || typeof notes !== 'string') {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        return res.end(JSON.stringify({ success: false, error: 'Customer ID and notes required' }));
+      }
+
+      const customer = db.prepare('SELECT * FROM leads WHERE id = ?').get(id);
+      if (!customer) {
+        res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
+        return res.end(JSON.stringify({ success: false, error: 'Customer not found' }));
+      }
+
+      const folderName = getCustomerFolderName(customer);
+      const folderPath = path.join(CUSTOMERS_DIR, folderName);
+      if (!fs.existsSync(folderPath)) {
+        createCustomerFolder(customer);
+      }
+      const notesPath = path.join(folderPath, 'notes.txt');
+
+      try {
+        fs.writeFileSync(notesPath, notes, 'utf8');
+        console.log(`[Notes] Saved notes for ${customer.name} (customers/${folderName}/notes.txt)`);
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        return res.end(JSON.stringify({ success: true, message: 'Notes saved successfully' }));
+      } catch (err) {
+        console.error(`[Notes] Failed to write notes for ${customer.name}:`, err.message);
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        return res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
+  // 3.3.3 Extend Wi-Fi Session (+1 Hour)
+  if (parsedUrl.pathname === '/admin/session/extend' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      const params = new URLSearchParams(body);
+      const ip = (params.get('ip') || '').trim();
+      const minutes = parseInt(params.get('minutes') || '60', 10);
+
+      if (ip) {
+        const nowMs = Date.now();
+        let session = activeSessions.get(ip);
+        const customer = db.prepare('SELECT * FROM leads WHERE ip = ? ORDER BY id DESC LIMIT 1').get(ip);
+        
+        const baseTime = (session && session.expiresAt > nowMs) ? session.expiresAt : nowMs;
+        const newExpiresAt = baseTime + (minutes * 60 * 1000);
+        const newExpiresIso = new Date(newExpiresAt).toISOString();
+
+        if (!session) {
+          session = {
+            id: customer ? customer.id : null,
+            name: customer ? customer.name : 'Active Guest',
+            phone: customer ? customer.phone : '',
+            connectedAt: nowMs,
+            expiresAt: newExpiresAt
+          };
+        } else {
+          session.expiresAt = newExpiresAt;
+        }
+        activeSessions.set(ip, session);
+        authorizedIps.add(ip);
+        if (firewall) firewall.allowIp(ip);
+
+        if (customer) {
+          try {
+            db.prepare('UPDATE leads SET session_expires_at = ? WHERE id = ?').run(newExpiresIso, customer.id);
+          } catch (e) {}
+        }
+        console.log(`[Session Extended] ⏱️ Extended +${minutes}m for IP ${ip} (New Expiration: ${new Date(newExpiresAt).toLocaleTimeString()})`);
+      }
+
       res.writeHead(302, { Location: '/admin' });
       res.end();
     });
@@ -488,10 +710,14 @@ const server = http.createServer((req, res) => {
         }));
       }
 
-      // Save lead to database
+      // Save lead to database with session expiration
       const userAgent = req.headers['user-agent'] || '';
-      const insertStmt = db.prepare('INSERT INTO leads (name, phone, ip, customer_type, marketing_opt_in, user_agent) VALUES (?, ?, ?, ?, 1, ?)');
-      const result = insertStmt.run(name, phone, clientIp, 'Hotspot', userAgent);
+      const durationMinutes = (CONFIG.session && CONFIG.session.durationMinutes) || 120;
+      const expiresAtMs = Date.now() + (durationMinutes * 60 * 1000);
+      const expiresAtIso = new Date(expiresAtMs).toISOString();
+
+      const insertStmt = db.prepare('INSERT INTO leads (name, phone, ip, customer_type, marketing_opt_in, user_agent, session_expires_at) VALUES (?, ?, ?, ?, 1, ?, ?)');
+      const result = insertStmt.run(name, phone, clientIp, 'Hotspot', userAgent, expiresAtIso);
       createCustomerFolder({
         id: result.lastInsertRowid,
         name,
@@ -501,10 +727,17 @@ const server = http.createServer((req, res) => {
         created_at: new Date().toISOString()
       });
 
-      // Authorize client IP
+      // Authorize client IP & activate session
       authorizedIps.add(clientIp);
+      activeSessions.set(clientIp, {
+        id: result.lastInsertRowid,
+        name,
+        phone,
+        connectedAt: Date.now(),
+        expiresAt: expiresAtMs
+      });
       if (firewall) firewall.allowIp(clientIp);
-      console.log(`[+] NEW HOTSPOT CUSTOMER: ${name} (${phone}) from IP: ${clientIp}`);
+      console.log(`[+] NEW HOTSPOT CUSTOMER: ${name} (${phone}) from IP: ${clientIp} [${durationMinutes}m session until ${new Date(expiresAtMs).toLocaleTimeString()}]`);
 
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(getSuccessHtml(name, CONFIG.redirectUrl));
