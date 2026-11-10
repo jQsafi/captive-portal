@@ -51,6 +51,8 @@ Venues, retail shops, cafes, and event organizers share free high-speed Wi-Fi in
 │                         • Exports CSV (/admin/export.csv)                       │
 │                         • Revokes IPs (/admin/revoke)                           │
 │                                                                                 │
+│  [templates.js]     ──► In-memory caching view engine for HTML/CSS/JS templates │
+│  [templates/]       ──► Modular HTML files: portal.html, success.html, admin.html│
 │  [leads.db]         ──► Native node:sqlite database (DatabaseSync)              │
 │  [customers/]       ──► Local folder directory named by customer mobile number  │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -164,7 +166,8 @@ Currently, all HTML and CSS reside as template strings inside `server.js`.
 - [ ] **Live Polling / Auto-Refresh:** Non-intrusive periodic fetch or lightweight SSE to show new leads in real-time.
 - [ ] **Safety Confirmation on Revoke:** Modal or tooltip confirmation to prevent accidental disconnection.
 
-### Phase 4: Code Architecture & Separation of Concerns (Engineering Quality)
-- [ ] **Modular Template Files:** Move large inline HTML/CSS blocks out of `server.js` into clean `templates/portal.html`, `templates/success.html`, and `templates/admin.html`.
-- [ ] Load and cache templates in memory using `node:fs` to preserve maximum performance and maintain pure zero-dependency Node.js architecture.
+### Phase 4: Code Architecture & Separation of Concerns (Engineering Quality) [COMPLETED]
+- [x] **Modular Template Files:** Moved 2,300+ lines of inline HTML/CSS blocks out of `server.js` into clean `templates/portal.html`, `templates/success.html`, and `templates/admin.html`.
+- [x] **Zero-Dependency View Engine (`templates.js`):** Loads and caches templates in memory using native `node:fs` with micro-placeholder replacement (`{{key}}`) for optimal performance and pure zero-dependency Node.js architecture.
+- [x] Shrunk `server.js` from 3,043 lines down to ~680 clean lines.
 

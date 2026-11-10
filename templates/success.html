@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="refresh" content="3;url={{safeUrl}}">
+  <title>Connected - {{businessName}}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      background: #080c14;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(34, 197, 94, 0.15) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(37, 99, 235, 0.18) 0%, transparent 45%),
+        linear-gradient(180deg, #080c14 0%, #0f172a 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      color: #f8fafc;
+      text-align: center;
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      max-width: 440px;
+      width: 100%;
+      padding: 36px 26px;
+      position: relative;
+      overflow: hidden;
+      animation: cardIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #22c55e, #38bdf8, #2563eb);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #4ade80;
+      padding: 5px 14px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      margin-bottom: 20px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #22c55e;
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .icon-wrapper {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 18px auto;
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.1));
+      border: 1.5px solid rgba(34, 197, 94, 0.35);
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 30px rgba(34, 197, 94, 0.25);
+      animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.5); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .icon-wrapper svg {
+      width: 38px;
+      height: 38px;
+      stroke: #4ade80;
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    h1 {
+      font-size: 24px;
+      color: #ffffff;
+      margin-bottom: 8px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    p.message {
+      color: #94a3b8;
+      font-size: 14px;
+      line-height: 1.55;
+      margin-bottom: 22px;
+    }
+
+    .venue-card {
+      background: rgba(30, 41, 59, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 22px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .venue-card svg {
+      width: 28px;
+      height: 28px;
+      stroke: #38bdf8;
+      stroke-width: 2;
+      fill: none;
+      flex-shrink: 0;
+    }
+
+    .venue-card-text {
+      font-size: 12px;
+      color: #cbd5e1;
+      line-height: 1.45;
+    }
+
+    .venue-card-text strong {
+      color: #ffffff;
+      font-size: 13px;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .countdown-box {
+      margin-bottom: 22px;
+    }
+
+    .countdown-text {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+
+    .countdown-text b {
+      color: #38bdf8;
+      font-size: 15px;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 4px;
+      background: rgba(30, 41, 59, 0.8);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #2563eb, #38bdf8, #22c55e);
+      width: 100%;
+      border-radius: 9999px;
+      transition: width 1s linear;
+    }
+
+    a.btn-continue {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 16px;
+      transition: all 0.2s ease;
+      box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.5);
+    }
+
+    a.btn-continue:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px -5px rgba(37, 99, 235, 0.6);
+    }
+
+    a.btn-continue:active {
+      transform: translateY(0);
+    }
+
+    a.btn-continue svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      fill: none;
+    }
+
+    .cna-note {
+      margin-top: 16px;
+      font-size: 11px;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    
+    <!-- Status Pill -->
+    <div class="status-badge">
+      <span class="pulse-dot"></span>
+      <span>INTERNET ACTIVE</span>
+    </div>
+
+    <!-- Animated Checkmark Graphic -->
+    <div class="icon-wrapper">
+      <svg viewBox="0 0 24 24">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+    </div>
+
+    <!-- Personalized Greeting -->
+    <h1>You're Online, {{safeName}}!</h1>
+    <p class="message">Your device is authenticated. You can now use all your apps, social media, messaging, and web browsing.</p>
+
+    <!-- Venue Greeting Card -->
+    <div class="venue-card">
+      <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+      <div class="venue-card-text">
+        <strong>Welcome to {{businessName}}</strong>
+        <span>Enjoy your high-speed access! Check WhatsApp shortly for exclusive coupons.</span>
+      </div>
+    </div>
+
+    <!-- Countdown & Smooth Progress Bar -->
+    <div class="countdown-box">
+      <div class="countdown-text">Redirecting in <b id="countdownTimer">3</b>s...</div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width: 100%;"></div>
+      </div>
+    </div>
+
+    <!-- High-Impact Manual Redirect Button -->
+    <a href="{{safeUrl}}" class="btn-continue" id="redirectLink">
+      <span>Continue to Web</span>
+      <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+    </a>
+
+    <div class="cna-note">
+      Tap "Done" or "Continue" if your phone displays a Wi-Fi prompt.
+    </div>
+
+  </div>
+
+  <script>
+    (function() {
+      var targetUrl = {{targetUrlJson}};
+      var seconds = 3;
+      var timerEl = document.getElementById('countdownTimer');
+      var fillEl = document.getElementById('progressFill');
+
+      var interval = setInterval(function() {
+        seconds--;
+        if (timerEl) timerEl.textContent = Math.max(0, seconds);
+        if (fillEl) fillEl.style.width = Math.max(0, (seconds / 3) * 100) + '%';
+        
+        if (seconds <= 0) {
+          clearInterval(interval);
+          try {
+            window.location.href = targetUrl;
+          } catch(e) {}
+        }
+      }, 1000);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{businessName}} - Customer Directory</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    
+    body {
+      background: #0b0f19;
+      color: #f8fafc;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    .container {
+      max-width: 1140px;
+      margin: 0 auto;
+    }
+
+    /* Header Bar */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 22px 26px;
+      border-radius: 20px;
+      backdrop-filter: blur(12px);
+    }
+
+    .brand-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(37, 99, 235, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #60a5fa;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.3px;
+    }
+
+    p.subtitle {
+      color: #94a3b8;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-add-customer {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: white;
+      padding: 11px 18px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 700;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    }
+
+    .btn-add-customer:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+      transform: translateY(-1px);
+    }
+
+    .btn-export {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      color: #cbd5e1;
+      padding: 11px 18px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-export:hover {
+      background: rgba(30, 41, 59, 1);
+      color: white;
+      border-color: rgba(148, 163, 184, 0.4);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 18px 20px;
+      border-radius: 16px;
+      backdrop-filter: blur(12px);
+      text-align: left;
+    }
+
+    .stat-card strong {
+      display: block;
+      font-size: 30px;
+      font-weight: 800;
+      color: #38bdf8;
+      letter-spacing: -0.5px;
+      margin-bottom: 3px;
+    }
+
+    .stat-card span {
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    /* Filter & Search Toolbar */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .search-wrapper {
+      position: relative;
+      flex: 1;
+      max-width: 440px;
+    }
+
+    .search-wrapper input {
+      width: 100%;
+      padding: 12px 16px 12px 40px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1.5px solid rgba(148, 163, 184, 0.2);
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .search-wrapper input:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+
+    .search-wrapper svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 17px;
+      height: 17px;
+      stroke: #64748b;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      color: #94a3b8;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-btn:hover {
+      background: rgba(30, 41, 59, 0.9);
+      color: white;
+    }
+
+    .filter-btn.active {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: rgba(56, 189, 248, 0.35);
+      color: #38bdf8;
+    }
+
+    .count-indicator {
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    /* Table Container */
+    .table-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th {
+      background: rgba(30, 41, 59, 0.6);
+      padding: 14px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    td {
+      padding: 14px 16px;
+      font-size: 14px;
+      color: #e2e8f0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      vertical-align: middle;
+    }
+
+    tr.customer-row:hover {
+      background: rgba(30, 41, 59, 0.35);
+    }
+
+    .phone-link {
+      color: #38bdf8;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .phone-link:hover {
+      text-decoration: underline;
+    }
+
+    .btn-wa {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #22c55e;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      transition: background 0.2s ease;
+    }
+
+    .btn-wa:hover {
+      background: #16a34a;
+    }
+
+    .btn-wa svg {
+      width: 14px;
+      height: 14px;
+      stroke: white;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    /* Customer Type Badges */
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+
+    .badge-hotspot {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #38bdf8;
+    }
+
+    .badge-walkin {
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      color: #c084fc;
+    }
+
+    .badge-repair {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      color: #fbbf24;
+    }
+
+    .badge-sales {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      color: #4ade80;
+    }
+
+    .badge-general {
+      background: rgba(148, 163, 184, 0.15);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      color: #cbd5e1;
+    }
+
+    .ip-tag {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+
+    .no-ip {
+      color: #64748b;
+      font-weight: 700;
+    }
+
+    .in-store-tag {
+      display: inline-block;
+      font-size: 11px;
+      color: #94a3b8;
+      background: rgba(30, 41, 59, 0.6);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    /* Action Buttons (Table & Cards) */
+    .action-buttons-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      text-decoration: none;
+      border: 1px solid transparent;
+      outline: none;
+    }
+
+    .btn-action svg {
+      width: 13px;
+      height: 13px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      flex-shrink: 0;
+    }
+
+    .btn-edit {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+    }
+
+    .btn-edit:hover {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #0284c7;
+    }
+
+    .btn-delete {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #f87171;
+    }
+
+    .btn-delete:hover {
+      background: #dc2626;
+      color: #ffffff;
+      border-color: #dc2626;
+    }
+
+    .btn-disconnect {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.3);
+      color: #fbbf24;
+    }
+
+    .btn-disconnect:hover {
+      background: #d97706;
+      color: #ffffff;
+      border-color: #d97706;
+    }
+
+    /* Mobile Cards Container */
+    .mobile-cards-list {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .mobile-lead-card {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .card-id {
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 700;
+      display: block;
+    }
+
+    .card-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-top: 2px;
+    }
+
+    .card-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .meta-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .card-actions .btn-wa {
+      flex: 1 1 auto;
+      justify-content: center;
+      padding: 8px 12px;
+    }
+
+    .card-actions .btn-edit {
+      flex: 1 1 auto;
+      justify-content: center;
+      padding: 8px 12px;
+    }
+
+    .card-actions form {
+      flex: 1 1 auto;
+      display: flex;
+    }
+
+    .card-actions form .btn-action {
+      width: 100%;
+      justify-content: center;
+      padding: 8px 12px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 16px;
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    /* Add Customer Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      max-width: 460px;
+      width: 100%;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
+      animation: modalFadeIn 0.25s ease;
+      text-align: left;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header h2 {
+      font-size: 17px;
+      color: #ffffff;
+      font-weight: 700;
+    }
+
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+    }
+
+    .modal-close-btn:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .modal-close-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .modal-body {
+      padding: 22px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 12px 14px;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1.5px solid rgba(148, 163, 184, 0.25);
+      border-radius: 10px;
+      font-size: 14px;
+      color: #ffffff;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .form-group select option {
+      background: #0f172a;
+      color: #ffffff;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+
+    .phone-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .phone-row select {
+      flex: 0 0 110px;
+    }
+
+    .phone-row input {
+      flex: 1;
+    }
+
+    .modal-footer {
+      padding: 16px 22px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .btn-secondary {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      color: #cbd5e1;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .btn-save {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #ffffff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    /* Mobile Responsive Switch */
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      table { display: none; }
+      .mobile-cards-list { display: flex; }
+      .header { flex-direction: column; align-items: flex-start; }
+      .header-actions { width: 100%; }
+      .btn-add-customer, .btn-export { flex: 1; justify-content: center; }
+      .toolbar { flex-direction: column; align-items: stretch; }
+      .search-wrapper { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <!-- Top Header -->
+    <div class="header">
+      <div>
+        <div class="brand-pill">
+          <svg style="width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2;" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+          <span>{{businessNameUpper}} SHOP</span>
+        </div>
+        <h1>👥 Smart Computer — Customer Directory</h1>
+        <p class="subtitle">Comprehensive customer directory for Smart Computer shop — Hotspot visitors and in-store walk-in clients.</p>
+      </div>
+
+      <div class="header-actions">
+        <button type="button" class="btn-add-customer" id="openAddModalBtn">
+          <svg style="width:16px; height:16px; stroke:currentColor; stroke-width:2.4; fill:none;" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>Add Customer</span>
+        </button>
+        <a href="/admin/export.csv" class="btn-export">
+          <svg style="width:16px; height:16px; stroke:currentColor; stroke-width:2.2; fill:none;" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span>Export CSV</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Quick Stats Summary -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <strong>{{totalCount}}</strong>
+        <span>Total Customers</span>
+      </div>
+      <div class="stat-card">
+        <strong>{{hotspotCount}}</strong>
+        <span>Hotspot Visitors</span>
+      </div>
+      <div class="stat-card">
+        <strong>{{walkinCount}}</strong>
+        <span>Walk-in Clients</span>
+      </div>
+      <div class="stat-card">
+        <strong>{{activeDeviceCount}}</strong>
+        <span>Active Wi-Fi Devices</span>
+      </div>
+    </div>
+
+    <!-- Search & Quick Filters Toolbar -->
+    <div class="toolbar">
+      <div class="search-wrapper">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="searchInput" placeholder="Search by name, phone, IP, or type...">
+      </div>
+
+      <div class="filter-tabs">
+        <button type="button" class="filter-btn active" data-filter="all">All ({{totalCount}})</button>
+        <button type="button" class="filter-btn" data-filter="hotspot">📶 Hotspot</button>
+        <button type="button" class="filter-btn" data-filter="walk-in">🚶 Walk-in</button>
+        <button type="button" class="filter-btn" data-filter="service">🛠️ Service/Repair</button>
+        <button type="button" class="filter-btn" data-filter="sales">🛒 Sales</button>
+      </div>
+
+      <div class="count-indicator" id="recordsCount">
+        Showing <b>{{totalCount}}</b> record(s)
+      </div>
+    </div>
+
+    <!-- Content Table / Mobile Cards -->
+    <div class="table-card">
+      
+      <!-- Desktop Table -->
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Customer Name</th>
+            <th>Customer Type</th>
+            <th>Mobile Number</th>
+            <th>WhatsApp</th>
+            <th>Device IP</th>
+            <th>Registration Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          {{tableRows}}
+        </tbody>
+      </table>
+
+      <!-- Mobile Cards List -->
+      <div class="mobile-cards-list" id="cardsBody">
+        {{mobileCards}}
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Add Customer Modal -->
+  <div class="modal-backdrop" id="addCustomerModal" role="dialog" aria-modal="true" aria-labelledby="addModalTitle">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="addModalTitle">➕ Add New Customer Record</h2>
+        <button type="button" class="modal-close-btn" id="closeAddModalBtn" aria-label="Close modal">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <form method="POST" action="/admin/customer/add">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="custName">Customer Full Name</label>
+            <input type="text" id="custName" name="name" placeholder="e.g. Tanvir Ahmed" required autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="custPhone">Mobile / WhatsApp Number</label>
+            <div class="phone-row">
+              <select name="country_code">
+                <option value="+880" selected>🇧🇩 +880</option>
+                <option value="+1">🇺🇸 +1</option>
+                <option value="+91">🇮🇳 +91</option>
+                <option value="+44">🇬🇧 +44</option>
+                <option value="+971">🇦🇪 +971</option>
+                <option value="+966">🇸🇦 +966</option>
+                <option value="">🌐 Other</option>
+              </select>
+              <input type="tel" id="custPhone" name="phone" placeholder="e.g. 1712345678" required>
+            </div>
+            <p style="font-size:11px; color:#94a3b8; margin-top:5px;">💡 Leading 0 will be stripped automatically; folder in <code>customers/</code> will be created automatically.</p>
+          </div>
+          <div class="form-group">
+            <label for="custType">Customer Type</label>
+            <select id="custType" name="customer_type">
+              <option value="Walk-in Client" selected>🚶 Walk-in Client</option>
+              <option value="Service / Repair">🛠️ Service / Repair</option>
+              <option value="Sales / Purchase">🛒 Sales / Purchase</option>
+              <option value="General Customer">👤 General Customer</option>
+              <option value="Hotspot">📶 Hotspot</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="cancelAddModalBtn">Cancel</button>
+          <button type="submit" class="btn-save">Save Customer Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Customer Modal -->
+  <div class="modal-backdrop" id="editCustomerModal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="editModalTitle">✏️ Edit Customer Record</h2>
+        <button type="button" class="modal-close-btn" id="closeEditModalBtn" aria-label="Close modal">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <form method="POST" action="/admin/customer/edit">
+        <input type="hidden" id="editCustId" name="id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="editCustName">Customer Full Name</label>
+            <input type="text" id="editCustName" name="name" placeholder="e.g. Tanvir Ahmed" required autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="editCustPhone">Mobile / WhatsApp Number</label>
+            <div class="phone-row">
+              <select id="editCustCountry" name="country_code">
+                <option value="+880">🇧🇩 +880</option>
+                <option value="+1">🇺🇸 +1</option>
+                <option value="+91">🇮🇳 +91</option>
+                <option value="+44">🇬🇧 +44</option>
+                <option value="+971">🇦🇪 +971</option>
+                <option value="+966">🇸🇦 +966</option>
+                <option value="">🌐 Other</option>
+              </select>
+              <input type="tel" id="editCustPhone" name="phone" placeholder="e.g. 1712345678" required>
+            </div>
+            <p style="font-size:11px; color:#94a3b8; margin-top:5px;">💡 Leading 0 is automatically stripped; folder in <code>customers/</code> will update automatically.</p>
+          </div>
+          <div class="form-group">
+            <label for="editCustType">Customer Type</label>
+            <select id="editCustType" name="customer_type">
+              <option value="Hotspot">📶 Hotspot</option>
+              <option value="Walk-in Client">🚶 Walk-in Client</option>
+              <option value="Service / Repair">🛠️ Service / Repair</option>
+              <option value="Sales / Purchase">🛒 Sales / Purchase</option>
+              <option value="General Customer">👤 General Customer</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="cancelEditModalBtn">Cancel</button>
+          <button type="submit" class="btn-save">Update Customer Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Real-time Filter & Modal Script -->
+  <script>
+    (function() {
+      var searchInput = document.getElementById('searchInput');
+      var recordsCount = document.getElementById('recordsCount');
+      var tableRows = document.querySelectorAll('tr.customer-row');
+      var mobileCards = document.querySelectorAll('.mobile-lead-card');
+      var filterBtns = document.querySelectorAll('.filter-btn');
+      var total = {{totalCount}};
+      var activeFilter = 'all';
+
+      // Add Modal Handlers
+      var addModal = document.getElementById('addCustomerModal');
+      var openAddBtn = document.getElementById('openAddModalBtn');
+      var closeAddBtn = document.getElementById('closeAddModalBtn');
+      var cancelAddBtn = document.getElementById('cancelAddModalBtn');
+      var addNameInput = document.getElementById('custName');
+
+      function openAddModal() {
+        if (addModal) {
+          addModal.classList.add('active');
+          if (addNameInput) setTimeout(function() { addNameInput.focus(); }, 100);
+        }
+      }
+      function closeAddModal() {
+        if (addModal) addModal.classList.remove('active');
+      }
+
+      if (openAddBtn) openAddBtn.addEventListener('click', openAddModal);
+      if (closeAddBtn) closeAddBtn.addEventListener('click', closeAddModal);
+      if (cancelAddBtn) cancelAddBtn.addEventListener('click', closeAddModal);
+      if (addModal) {
+        addModal.addEventListener('click', function(e) {
+          if (e.target === addModal) closeAddModal();
+        });
+      }
+
+      var custPhone = document.getElementById('custPhone');
+      if (custPhone) {
+        custPhone.addEventListener('input', function() {
+          var val = this.value;
+          var cleaned = val.replace(/[^0-9+]/g, '');
+          if (cleaned.startsWith('+880')) cleaned = cleaned.slice(4);
+          else if (cleaned.startsWith('880')) cleaned = cleaned.slice(3);
+          else if (cleaned.startsWith('+88') && cleaned.length > 4) cleaned = cleaned.slice(3);
+          else if (cleaned.startsWith('88') && cleaned.length > 11) cleaned = cleaned.slice(2);
+          if (cleaned.startsWith('0')) {
+            cleaned = cleaned.replace(/^0+/, '');
+          }
+          if (val !== cleaned) this.value = cleaned;
+        });
+      }
+
+      // Edit Modal Handlers
+      var editModal = document.getElementById('editCustomerModal');
+      var closeEditBtn = document.getElementById('closeEditModalBtn');
+      var cancelEditBtn = document.getElementById('cancelEditModalBtn');
+      var editPhone = document.getElementById('editCustPhone');
+
+      window.openEditModal = function(id, name, fullPhone, type) {
+        var editId = document.getElementById('editCustId');
+        var editName = document.getElementById('editCustName');
+        var editCountry = document.getElementById('editCustCountry');
+        var editPhone = document.getElementById('editCustPhone');
+        var editType = document.getElementById('editCustType');
+
+        if (editId) editId.value = id;
+        if (editName) editName.value = name || '';
+
+        var phoneStr = String(fullPhone || '').trim();
+        var detectedCode = '';
+        var nationalNumber = phoneStr;
+
+        var knownCodes = ['+880', '+971', '+966', '+91', '+44', '+65', '+61', '+49', '+92', '+33', '+81', '+62', '+234', '+1'];
+        for (var i = 0; i < knownCodes.length; i++) {
+          var c = knownCodes[i];
+          if (phoneStr.startsWith(c)) {
+            detectedCode = c;
+            nationalNumber = phoneStr.slice(c.length);
+            break;
+          }
+        }
+
+        // Strip leading 0
+        nationalNumber = nationalNumber.replace(/^0+/, '');
+
+        if (editCountry) {
+          if (detectedCode) {
+            editCountry.value = detectedCode;
+          } else if (phoneStr.startsWith('+')) {
+            editCountry.value = '';
+          } else {
+            editCountry.value = '+880';
+          }
+        }
+
+        if (editPhone) editPhone.value = nationalNumber;
+        if (editType) editType.value = type || 'Walk-in Client';
+
+        if (editModal) {
+          editModal.classList.add('active');
+          if (editName) setTimeout(function() { editName.focus(); }, 100);
+        }
+      };
+
+      window.closeEditModal = function() {
+        if (editModal) editModal.classList.remove('active');
+      };
+
+      if (closeEditBtn) closeEditBtn.addEventListener('click', window.closeEditModal);
+      if (cancelEditBtn) cancelEditBtn.addEventListener('click', window.closeEditModal);
+      if (editModal) {
+        editModal.addEventListener('click', function(e) {
+          if (e.target === editModal) window.closeEditModal();
+        });
+      }
+
+      if (editPhone) {
+        editPhone.addEventListener('input', function() {
+          var val = this.value;
+          var cleaned = val.replace(/[^0-9+]/g, '');
+          if (cleaned.startsWith('+880')) cleaned = cleaned.slice(4);
+          else if (cleaned.startsWith('880')) cleaned = cleaned.slice(3);
+          else if (cleaned.startsWith('+88') && cleaned.length > 4) cleaned = cleaned.slice(3);
+          else if (cleaned.startsWith('88') && cleaned.length > 11) cleaned = cleaned.slice(2);
+          if (cleaned.startsWith('0')) {
+            cleaned = cleaned.replace(/^0+/, '');
+          }
+          if (val !== cleaned) this.value = cleaned;
+        });
+      }
+
+      // Close modals on Escape key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          if (addModal && addModal.classList.contains('active')) closeAddModal();
+          if (editModal && editModal.classList.contains('active')) window.closeEditModal();
+        }
+      });
+
+      // Filter & Search Logic
+      function applyFilters() {
+        var query = (searchInput ? searchInput.value : '').trim().toLowerCase();
+        var visibleCount = 0;
+
+        tableRows.forEach(function(row) {
+          var searchStr = row.getAttribute('data-search') || '';
+          var rowType = row.getAttribute('data-type') || '';
+          var matchesQuery = !query || searchStr.indexOf(query) !== -1;
+          var matchesType = activeFilter === 'all' || rowType.indexOf(activeFilter) !== -1;
+
+          if (matchesQuery && matchesType) {
+            row.style.display = '';
+            visibleCount++;
+          } else {
+            row.style.display = 'none';
+          }
+        });
+
+        mobileCards.forEach(function(card) {
+          var searchStr = card.getAttribute('data-search') || '';
+          var cardType = card.getAttribute('data-type') || '';
+          var matchesQuery = !query || searchStr.indexOf(query) !== -1;
+          var matchesType = activeFilter === 'all' || cardType.indexOf(activeFilter) !== -1;
+
+          if (matchesQuery && matchesType) {
+            card.style.display = '';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+
+        if (recordsCount) {
+          recordsCount.innerHTML = 'Showing <b>' + visibleCount + '</b> of ' + total + ' record(s)';
+        }
+      }
+
+      if (searchInput) searchInput.addEventListener('input', applyFilters);
+
+      filterBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          filterBtns.forEach(function(b) { b.classList.remove('active'); });
+          this.classList.add('active');
+          activeFilter = this.getAttribute('data-filter') || 'all';
+          applyFilters();
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

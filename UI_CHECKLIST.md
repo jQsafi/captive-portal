@@ -107,10 +107,15 @@ This checklist tracks the design, development, and verification of all user-faci
 
 ---
 
-## ⏳ Phase 5: Architecture & Modular Templates — [UPCOMING]
+## ✅ Phase 5: Architecture & Modular Templates — [COMPLETED]
 
 *Focus: Code cleanliness and ease of customization while strictly keeping zero npm dependencies.*
 
-- [ ] **5.1 Template Separation**
-  - [ ] Extract inline HTML strings from `server.js` into clean `templates/` files.
-  - [ ] In-memory template caching via native `node:fs` for zero performance penalty.
+- [x] **5.1 Template Separation & Clean View Engine**
+  - [x] Extracted 2,300+ lines of inline HTML/CSS/JS strings from `server.js` into clean `templates/` files:
+    - `templates/portal.html` (Guest Wi-Fi Portal)
+    - `templates/success.html` (Connection Success Screen)
+    - `templates/admin.html` (Customer Directory Dashboard)
+  - [x] Implemented in-memory caching engine in `templates.js` via native `node:fs` for zero performance overhead.
+  - [x] Shrunk `server.js` from 3,043 lines down to ~680 clean lines.
+  - [x] IDE syntax highlighting and linting now function properly for all HTML/CSS/JS template files.
